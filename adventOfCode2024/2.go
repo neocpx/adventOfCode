@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -12,44 +11,38 @@ import (
 func main() {
 	file, err := os.Open("input.txt")
 	if err != nil {
-		log.Fatalf("Failed to open file: %v", err)
+		fmt.Errorf("failed to open file")
+		return
 	}
 	defer file.Close()
-
 	scanner := bufio.NewScanner(file)
 
 	var safe int32
-	var safeDampener int32
+	var safe_dampener int32
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue // Skip empty lines
-		}
-
-		strLevels := strings.Split(line, " ")
-		levels := make([]int32, len(strLevels))
-		for i := range strLevels {
-			v, err := strconv.Atoi(strLevels[i])
+		str_levels := strings.Split(scanner.Text(), " ")
+		levels := make([]int32, len(str_levels))
+		for i := range str_levels {
+			v, err := strconv.Atoi(str_levels[i])
 			if err != nil {
-				log.Fatalf("Failed to parse value '%s': %v", strLevels[i], err)
+				fmt.Errorf("failed to parse value")
+				return
 			}
 			levels[i] = int32(v)
 		}
-
-		// Check safety conditions
-		if isIncreasing(levels) || isDecreasing(levels) {
+		if inc(levels) || dec(levels) {
 			safe++
 		}
-		if isDampenedIncreasing(levels) || isDampenedDecreasing(levels) {
-			safeDampener++
+		if inc_dampener(levels) || dec_dampener(levels) {
+			fmt.Println(levels)
+			safe_dampener++
 		}
 	}
-
-	fmt.Println("Safe values:", safe)
-	fmt.Println("Safe values with dampener:", safeDampener)
+	fmt.Println("safe values :", safe)
+	fmt.Println("safe values with dampener :", safe_dampener)
 }
 
-func isIncreasing(a []int32) bool {
+func inc(a []int32) bool {
 	for i := 1; i < len(a); i++ {
 		if a[i] <= a[i-1] || a[i]-a[i-1] > 3 {
 			return false
@@ -57,8 +50,7 @@ func isIncreasing(a []int32) bool {
 	}
 	return true
 }
-
-func isDecreasing(a []int32) bool {
+func dec(a []int32) bool {
 	for i := 1; i < len(a); i++ {
 		if a[i] >= a[i-1] || a[i-1]-a[i] > 3 {
 			return false
@@ -66,27 +58,20 @@ func isDecreasing(a []int32) bool {
 	}
 	return true
 }
-
-func isDampenedIncreasing(a []int32) bool {
-	for i := range a {
-		if isIncreasing(removeIndex(a, i)) {
-			return true
+func inc_dampener(a []int32) bool {
+	for i := 1; i < len(a); i++ {
+		if a[i] <= a[i-1] || a[i]-a[i-1] > 3 {
+			return inc(append(a[:i-1], a[i:]...)) || inc(append(a[:i], a[i+1:]...))
 		}
 	}
-	return false
+	return true
 }
-
-func isDampenedDecreasing(a []int32) bool {
-	for i := range a {
-		if isDecreasing(removeIndex(a, i)) {
-			return true
+func dec_dampener(a []int32) bool {
+	fmt.Println(a)
+	for i := 1; i < len(a); i++ {
+		if a[i] >= a[i-1] || a[i-1]-a[i] > 3 {
+			return dec(append(a[:i-1], a[i:]...)) || dec(append(a[:i], a[i+1:]...))
 		}
 	}
-	return false
-}
-
-func removeIndex(a []int32, index int) []int32 {
-	result := make([]int32, 0, len(a)-1)
-	result = append(result, a[:index]...)
-	return append(result, a[index+1:]...)
+	return true
 }
